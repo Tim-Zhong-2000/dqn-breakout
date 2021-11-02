@@ -56,6 +56,8 @@ class Agent(object):
             lr=0.0000625,
             eps=1.5e-4,
         )
+        # use step lr
+        self.__scheduler = optim.lr_scheduler.StepLR(self.__optimizer, step_size=100_000, gamma=0.85)
         self.__target.eval()
 
     def run(self, state: TensorStack4, training: bool = False) -> int:
@@ -86,7 +88,7 @@ class Agent(object):
         for param in self.__policy.parameters():
             param.grad.data.clamp_(-1, 1)
         self.__optimizer.step()
-
+        self.__scheduler.step()
         return loss.item()
 
     def sync(self) -> None:
