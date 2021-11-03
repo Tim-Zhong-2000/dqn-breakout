@@ -23,9 +23,9 @@ class DQN(nn.Module):
 
     def forward(self, x):
         x = x / 255.
-        x = F.relu(self.__conv1(x))
-        x = F.relu(self.__conv2(x))
-        x = F.relu(self.__conv3(x))
+        x = self.__relu(self.__conv1(x))
+        x = self.__relu(self.__conv2(x))
+        x = self.__relu(self.__conv3(x))
         x = x.view(x.size(0), -1)
         adv = self.__relu(self.__fc1_1(x))
         val = self.__relu(self.__fc1_2(x))
