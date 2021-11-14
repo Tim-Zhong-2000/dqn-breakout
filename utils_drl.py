@@ -35,7 +35,7 @@ class Agent(object):
         self.__action_dim = action_dim
         self.__device = device
         self.__gamma = gamma
-
+#         self.__last_action = 0
         self.__eps_start = eps_start
         self.__eps_final = eps_final
         self.__eps_decay = eps_decay
@@ -53,11 +53,11 @@ class Agent(object):
         self.__target.load_state_dict(self.__policy.state_dict())
         self.__optimizer = optim.Adam(
             self.__policy.parameters(),
-            lr=0.000625,
+            lr=0.0000625,
             eps=1.5e-4,
         )
         self.__scheduler = optim.lr_scheduler.StepLR(
-            self.__optimizer, step_size=100_000, gamma=0.8)
+            self.__optimizer, step_size=2_000_000, gamma=0.8)
         self.__target.eval()
 
     def run(self, state: TensorStack4, training: bool = False) -> int:
@@ -66,11 +66,15 @@ class Agent(object):
             self.__eps -= \
                 (self.__eps_start - self.__eps_final) / self.__eps_decay
             self.__eps = max(self.__eps, self.__eps_final)
-
+        
         if self.__r.random() > self.__eps:
             with torch.no_grad():
-                return self.__policy(state).max(1).indices.item()
-        return self.__r.randint(0, self.__action_dim - 1)
+                self.__last_action = self.__policy(state).max(1).indices.item()
+                return self.__last_action
+        # 0是不动，1是往右，2是往左
+        if self.__r.random() > 0.9:
+            return self.__r.randint(0, self.__action_dim - 1)
+        return 0
 
     def learn(self, memory: ReplayMemory, batch_size: int) -> float:
         """learn trains the value network via TD-learning."""
