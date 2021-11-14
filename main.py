@@ -9,32 +9,35 @@ from utils_drl import Agent
 from utils_env import MyEnv
 from utils_memory import ReplayMemory
 
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+# torch.cuda.set_device(1)
 
-GAMMA = 0.99
+GAMMA = 0.95
 GLOBAL_SEED = 0
 MEM_SIZE = 100_000
 RENDER = False
 SAVE_PREFIX = "./models"
 STACK_SIZE = 4
 
-EPS_START = 0.5
-EPS_END = 0.001
+EPS_START = 0.1
+EPS_END = 0.01
 EPS_DECAY = 1000000
 
 BATCH_SIZE = 32
 POLICY_UPDATE = 4
 TARGET_UPDATE = 10_000
 WARM_STEPS = 50_000
-MAX_STEPS = 5_000_000
-EVALUATE_FREQ = 100_000
+MAX_STEPS = 1_000_000
+EVALUATE_FREQ = 10_000
 
 rand = random.Random()
 rand.seed(GLOBAL_SEED)
 new_seed = lambda: rand.randint(0, 1000_000)
-os.mkdir(SAVE_PREFIX)
 
+torch.set_num_threads(4)
 torch.manual_seed(new_seed())
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+device = torch.device("cuda")
 env = MyEnv(device)
 agent = Agent(
     env.get_action_dim(),
@@ -44,8 +47,20 @@ agent = Agent(
     EPS_START,
     EPS_END,
     EPS_DECAY,
+    restore='model_180_best'
 )
+# agent = Agent(
+#     env.get_action_dim(),
+#     device,
+#     GAMMA,
+#     new_seed(),
+#     EPS_START,
+#     EPS_END,
+#     EPS_DECAY
+# )
 memory = ReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
+
+os.mkdir(SAVE_PREFIX)
 
 #### Training ####
 obs_queue: deque = deque(maxlen=5)
